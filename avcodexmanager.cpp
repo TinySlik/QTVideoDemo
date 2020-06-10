@@ -2,6 +2,7 @@
 
 AvCodexManager *AvCodexManager::m_instance = new AvCodexManager;
 #include <iostream>
+#include <thread>
 
 using namespace std;
 
@@ -11,9 +12,9 @@ int AvCodexManager::OpenInput(const std::string &inputUrl) {
     inputContext = avformat_alloc_context();
     lastReadPacktTime = av_gettime();
     inputContext->interrupt_callback.callback = interrupt_cb;
-     AVInputFormat *ifmt = av_find_input_format("dshow");
-     AVDictionary *format_opts =  nullptr;
-     av_dict_set_int(&format_opts, "rtbufsize", 18432000  , 0);
+    AVInputFormat *ifmt = av_find_input_format("dshow");
+    AVDictionary *format_opts =  nullptr;
+    av_dict_set_int(&format_opts, "rtbufsize", 18432000  , 0);
 
     int ret = avformat_open_input(&inputContext, inputUrl.c_str(), ifmt,&format_opts);
     if(ret < 0)
@@ -33,6 +34,53 @@ int AvCodexManager::OpenInput(const std::string &inputUrl) {
     return ret;
 }
 
+bool AvCodexManager::present(const QVideoFrame &frame)
+{
+    std::cout << __FUNCTION__ << std::endl;
+    // 处理捕获的帧
+    if(frame.isMapped())
+    {
+        setVideoFrame(frame);
+    }
+    else
+    {
+        QVideoFrame f(frame);
+        f.map(QAbstractVideoBuffer::ReadOnly);
+        setVideoFrame(f);
+    }
+    return true;
+}
+
+QList<QVideoFrame::PixelFormat> AvCodexManager::supportedPixelFormats(
+        QAbstractVideoBuffer::HandleType handleType)  const
+{
+    Q_UNUSED(handleType);
+    QList<QVideoFrame::PixelFormat> list;
+    list << QVideoFrame::Format_RGB32;
+    list << QVideoFrame::Format_ARGB32;
+    list << QVideoFrame::Format_RGB24;
+    list << QVideoFrame::Format_UYVY;
+    list << QVideoFrame::Format_Y8;
+    list << QVideoFrame::Format_YUYV;
+    return list;
+}
+
+void AvCodexManager::setVideoFrame(const QVideoFrame &frame)
+{
+    switch (frame.pixelFormat())
+    {
+    case QVideoFrame::Format_RGB24:
+    case QVideoFrame::Format_RGB32:
+    case QVideoFrame::Format_ARGB32:
+    case QVideoFrame::Format_ARGB32_Premultiplied:
+    case QVideoFrame::Format_YUYV:
+    case QVideoFrame::Format_UYVY:
+    case QVideoFrame::Format_Y8:
+    default:
+        break;
+    }
+}
+
 shared_ptr<AVPacket> AvCodexManager::ReadPacketFromSource()
 {
     shared_ptr<AVPacket> packet(static_cast<AVPacket*>(av_malloc(sizeof(AVPacket))), [&](AVPacket *p) { av_packet_free(&p); av_freep(&p);});
@@ -46,6 +94,97 @@ shared_ptr<AVPacket> AvCodexManager::ReadPacketFromSource()
     else
     {
         return nullptr;
+    }
+}
+
+void AvCodexManager::run()
+{
+    SwsScaleContext swsScaleContext;
+    AVFrame *videoFrame = av_frame_alloc();
+    AVFrame *pSwsVideoFrame = av_frame_alloc();
+    Init();
+    int ret = OpenInput("video=USB2.0 HD UVC WebCam");
+
+    if(ret <0)
+    {
+        CloseInput();
+        CloseOutput();
+
+        while(true)
+        {
+            this_thread::sleep_for(chrono::seconds(100));
+        }
+        return;
+    }
+
+    InitDecodeContext(inputContext->streams[0]);
+    ret = initEncoderCodec(inputContext->streams[0],&encodeContext);
+
+    if(ret >= 0)
+    {
+        ret = OpenOutput("D:\\usbCamera.mp4",encodeContext);
+    }
+    if(ret <0)
+    {
+        CloseInput();
+        CloseOutput();
+
+        while(true)
+        {
+            this_thread::sleep_for(chrono::seconds(100));
+        }
+        return;
+    }
+    swsScaleContext.SetSrcResolution(inputContext->streams[0]->codec->width, inputContext->streams[0]->codec->height);
+
+    swsScaleContext.SetDstResolution(encodeContext->width,encodeContext->height);
+    swsScaleContext.SetFormat(inputContext->streams[0]->codec->pix_fmt, encodeContext->pix_fmt);
+    initSwsContext(&pSwsContext, &swsScaleContext);
+    initSwsFrame(pSwsVideoFrame,encodeContext->width, encodeContext->height);
+    int64_t startTime = av_gettime();
+    while(true)
+    {
+        auto packet = ReadPacketFromSource();
+        if(av_gettime() - startTime > 10 * 1000 * 1000)
+        {
+            break;
+        }
+        if(packet && packet->stream_index == 0)
+        {
+            if(Decode(inputContext->streams[0],packet.get(),videoFrame))
+            {
+                sws_scale(pSwsContext, (const uint8_t *const *)videoFrame->data,
+                    videoFrame->linesize, 0, inputContext->streams[0]->codec->height, (uint8_t *const *)pSwsVideoFrame->data, pSwsVideoFrame->linesize);
+                auto packetEncode = Encode(encodeContext,pSwsVideoFrame);
+                if(packetEncode)
+                {
+                    ret = WritePacket(packetEncode);
+                    //cout <<"ret:" << ret<<endl;
+                }
+            }
+        }
+    }
+    cout <<"record success"<<endl;
+    av_frame_free(&videoFrame);
+    avcodec_close(encodeContext);
+    av_frame_free(&pSwsVideoFrame);
+
+    CloseInput();
+    CloseOutput();
+
+    while(true)
+    {
+        this_thread::sleep_for(chrono::seconds(100));
+    }
+    return;
+}
+
+int AvCodexManager::OpenOutput(const std::string &outUrl)
+{
+    if (encodeContext != nullptr) {
+        return OpenOutput(outUrl, encodeContext);
+    } else {
+        return -1;
     }
 }
 
@@ -109,6 +248,16 @@ void AvCodexManager::Init()
     avformat_network_init();
     avdevice_register_all();
     av_log_set_level(AV_LOG_ERROR);
+    std::cout << "AvCodexManager " << __func__ << " success." << std::endl;
+}
+
+void AvCodexManager::record(int seconds)
+{
+    //todo
+}
+void AvCodexManager::stop()
+{
+    //todo
 }
 
 void AvCodexManager::CloseInput()
@@ -243,12 +392,10 @@ int AvCodexManager::initSwsFrame(AVFrame *pSwsFrame, int iWidth, int iHeight)
 
 //int _tmain(int argc, _TCHAR* argv[])
 //{
-
 //    SwsScaleContext swsScaleContext;
 //    AVFrame *videoFrame = av_frame_alloc();
 //    AVFrame *pSwsVideoFrame = av_frame_alloc();
 
-//    Init();
 //    int ret = OpenInput("video=USB2.0 HD UVC WebCam");
 
 //    if(ret <0) goto Error;
@@ -263,7 +410,6 @@ int AvCodexManager::initSwsFrame(AVFrame *pSwsFrame, int iWidth, int iHeight)
 //        ret = OpenOutput("D:\\usbCamera.mp4",encodeContext);
 //    }
 //    if(ret <0) goto Error;
-
 
 //    swsScaleContext.SetSrcResolution(inputContext->streams[0]->codec->width, inputContext->streams[0]->codec->height);
 

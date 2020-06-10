@@ -3,6 +3,7 @@
 #include "pch.h"
 #include <string>
 #include <memory>
+#include <QAbstractVideoSurface>
 
 class SwsScaleContext
 {
@@ -37,8 +38,9 @@ public:
 };
 
 
-class AvCodexManager
+class AvCodexManager:public QAbstractVideoSurface
 {
+    Q_OBJECT
  public:
     static AvCodexManager *m_instance;
     static AvCodexManager *getInstance()
@@ -54,12 +56,10 @@ class AvCodexManager
         }
         return 0;
     }
-    int OpenInput(const std::string &inputUrl);
+
     std::shared_ptr<AVPacket> ReadPacketFromSource();
-    int OpenOutput(const std::string &outUrl, AVCodecContext *encodeCodec);
     void Init();
-    void CloseInput();
-    void CloseOutput();
+    int OpenOutput(const std::string &outUrl, AVCodecContext *encodeCodec);
     int WritePacket(std::shared_ptr<AVPacket> packet);
     int InitDecodeContext(AVStream *inputStream);
     int initEncoderCodec(AVStream* inputStream,AVCodecContext **encodeContext);
@@ -67,7 +67,12 @@ class AvCodexManager
     std::shared_ptr<AVPacket> Encode(AVCodecContext *encodeContext,AVFrame * frame);
     int initSwsContext(struct SwsContext** pSwsContext, SwsScaleContext *swsScaleContext);
     int initSwsFrame(AVFrame *pSwsFrame, int iWidth, int iHeight);
- private:
+
+    void run();
+    QList<QVideoFrame::PixelFormat> supportedPixelFormats(
+            QAbstractVideoBuffer::HandleType handleType = QAbstractVideoBuffer::NoHandle) const override;
+    void setVideoFrame(const QVideoFrame &frame);
+private:
     AvCodexManager();
     AVFormatContext *inputContext = nullptr;
     AVCodecContext *encodeContext = nullptr;
@@ -76,6 +81,24 @@ class AvCodexManager
     int64_t packetCount = 0;
     struct SwsContext* pSwsContext = nullptr;
     uint8_t * pSwpBuffer = nullptr;
+
+public Q_SLOTS:
+    bool present(const QVideoFrame &frame) override;
+    void record(int seconds);
+    void stop();
+    int OpenInput(const std::string &inputUrl);
+    int OpenOutput(const std::string &outUrl);
+    void CloseInput();
+    void CloseOutput();
+private:
+//    void setRGB24Image(const uint8_t *imgBuf, QSize size);
+//    void setRGB32Image(const uint8_t *imgBuf, QSize size);
+//    void setMono8Image(const uint8_t *imgBuf, QSize size);
+//    void setYUY2Image(const uint8_t *imgBuf, QSize size);
+//    void setVYUYImage(const uint8_t *imgBuf, QSize size);
+//    void setUYVYImage(const uint8_t *imgBuf, QSize size);
+    QImage m_image;
+Q_SIGNALS:
 };
 
 #endif // AVCODEXMANAGER_H

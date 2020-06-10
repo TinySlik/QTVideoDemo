@@ -71,7 +71,6 @@ public:
 
 private slots:
     void setCamera(const QCameraInfo &cameraInfo);
-
     void startCamera();
     void stopCamera();
 
@@ -127,6 +126,14 @@ private:
     QString m_videoContainerFormat;
     bool m_isCapturingImage = false;
     bool m_applicationExiting = false;
+
+signals:
+    int startRecord(int);
+    int stopRecord();
+    int OpenInput(const std::string &inputUrl);
+    int OpenOutput(const std::string &outUrl);
+    void CloseInput();
+    void CloseOutput();
 };
 
 #endif

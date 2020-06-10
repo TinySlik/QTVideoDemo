@@ -72,7 +72,6 @@ Q_DECLARE_METATYPE(QCameraInfo)
 
 Camera::Camera() : ui(new Ui::Camera)
 {
-    auto avcodec = AvCodexManager::getInstance();
     ui->setupUi(this);
     //Camera devices:
     QActionGroup *videoDevicesGroup = new QActionGroup(this);
@@ -97,7 +96,6 @@ Camera::Camera() : ui(new Ui::Camera)
 void Camera::setCamera(const QCameraInfo &cameraInfo)
 {
     m_camera.reset(new QCamera(cameraInfo));
-
     connect(m_camera.data(), &QCamera::stateChanged, this, &Camera::updateCameraState);
     connect(m_camera.data(), QOverload<QCamera::Error>::of(&QCamera::error), this, &Camera::displayCameraError);
 
@@ -114,12 +112,12 @@ void Camera::setCamera(const QCameraInfo &cameraInfo)
 
     connect(ui->exposureCompensation, &QAbstractSlider::valueChanged, this, &Camera::setExposureCompensation);
 
-    m_camera->setViewfinder(ui->viewfinder);
+//    m_camera->setViewfinder(ui->viewfinder);
+    m_camera->setViewfinder(AvCodexManager::getInstance());
 
     updateCameraState(m_camera->state());
     updateLockStatus(m_camera->lockStatus(), QCamera::UserRequest);
     updateRecorderState(m_mediaRecorder->state());
-
     connect(m_imageCapture.data(), &QCameraImageCapture::readyForCaptureChanged, this, &Camera::readyForCapture);
     connect(m_imageCapture.data(), &QCameraImageCapture::imageCaptured, this, &Camera::processCapturedImage);
     connect(m_imageCapture.data(), &QCameraImageCapture::imageSaved, this, &Camera::imageSaved);
@@ -146,6 +144,7 @@ void Camera::keyPressEvent(QKeyEvent * event)
         displayViewfinder();
         m_camera->searchAndLock();
         event->accept();
+
         break;
     case Qt::Key_Camera:
         if (m_camera->captureMode() == QCamera::CaptureStillImage) {
@@ -191,7 +190,7 @@ void Camera::processCapturedImage(int requestId, const QImage& img)
                                     Qt::SmoothTransformation);
 
     ui->lastImagePreviewLabel->setPixmap(QPixmap::fromImage(scaledImage));
-
+    static int kk = 0;
     // Display captured image for 4 seconds.
     displayCapturedImage();
     QTimer::singleShot(4000, this, &Camera::displayViewfinder);
@@ -310,6 +309,7 @@ void Camera::updateLockStatus(QCamera::LockStatus status, QCamera::LockChangeRea
 
 void Camera::takeImage()
 {
+    std::cout << __FUNCTION__ << std::endl;
     m_isCapturingImage = true;
     m_imageCapture->capture();
 }
@@ -407,16 +407,19 @@ void Camera::displayViewfinder()
 
 void Camera::displayCapturedImage()
 {
+    std::cout << __FUNCTION__ << std::endl;
     ui->stackedWidget->setCurrentIndex(1);
 }
 
 void Camera::readyForCapture(bool ready)
 {
+    std::cout << __FUNCTION__ << std::endl;
     ui->takeImageButton->setEnabled(ready);
 }
 
 void Camera::imageSaved(int id, const QString &fileName)
 {
+    std::cout << __FUNCTION__ << std::endl;
     Q_UNUSED(id);
     ui->statusbar->showMessage(tr("Captured \"%1\"").arg(QDir::toNativeSeparators(fileName)));
 
