@@ -52,6 +52,7 @@
 #include "ui_camera.h"
 #include "videosettings.h"
 #include "imagesettings.h"
+#include "avcodexmanager.h"
 
 #include <QMediaService>
 #include <QMediaRecorder>
@@ -71,6 +72,7 @@ Q_DECLARE_METATYPE(QCameraInfo)
 
 Camera::Camera() : ui(new Ui::Camera)
 {
+    auto avcodec = AvCodexManager::getInstance();
     ui->setupUi(this);
     //Camera devices:
     QActionGroup *videoDevicesGroup = new QActionGroup(this);

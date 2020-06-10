@@ -1,35 +1,73 @@
 #ifndef AVCODEXMANAGER_H
 #define AVCODEXMANAGER_H
+#include "pch.h"
+#include <string>
+#include <memory>
 
-extern "C"
+class SwsScaleContext
 {
-    #include "libavutil/opt.h"
-    #include "libavutil/channel_layout.h"
-    #include "libavutil/common.h"
-    #include "libavutil/imgutils.h"
-    #include "libavutil/mathematics.h"
-    #include "libavutil/samplefmt.h"
-    #include "libavutil/time.h"
-    #include "libavutil/fifo.h"
-    #include "libavcodec/avcodec.h"
-    #include "libavformat/avformat.h"
-    #include "libavformat/avio.h"
-    #include "libavfilter/avfilter.h"
-    #include "libavfilter/buffersink.h"
-    #include "libavfilter/buffersrc.h"
-    #include "libswscale/swscale.h"
-    #include "libswresample/swresample.h"
-    #include "libavdevice/avdevice.h"
-}
+public:
+    SwsScaleContext()
+    {
+
+    }
+    void SetSrcResolution(int width, int height)
+    {
+        srcWidth = width;
+        srcHeight = height;
+    }
+
+    void SetDstResolution(int width, int height)
+    {
+        dstWidth = width;
+        dstHeight = height;
+    }
+    void SetFormat(AVPixelFormat iformat, AVPixelFormat oformat)
+    {
+        this->iformat = iformat;
+        this->oformat = oformat;
+    }
+public:
+    int srcWidth;
+    int srcHeight;
+    int dstWidth;
+    int dstHeight;
+    AVPixelFormat iformat;
+    AVPixelFormat oformat;
+};
+
 
 class AvCodexManager
 {
+ public:
     static AvCodexManager *m_instance;
     static AvCodexManager *getInstance()
     {
         return m_instance;
     }
-private:
+    static int interrupt_cb(void *ctx)
+    {
+        int  timeout  = 3;
+        if(av_gettime() - getInstance()->lastReadPacktTime > timeout *1000 *1000)
+        {
+            return -1;
+        }
+        return 0;
+    }
+    int OpenInput(const std::string &inputUrl);
+    std::shared_ptr<AVPacket> ReadPacketFromSource();
+    int OpenOutput(const std::string &outUrl, AVCodecContext *encodeCodec);
+    void Init();
+    void CloseInput();
+    void CloseOutput();
+    int WritePacket(std::shared_ptr<AVPacket> packet);
+    int InitDecodeContext(AVStream *inputStream);
+    int initEncoderCodec(AVStream* inputStream,AVCodecContext **encodeContext);
+    bool Decode(AVStream* inputStream,AVPacket* packet, AVFrame *frame);
+    std::shared_ptr<AVPacket> Encode(AVCodecContext *encodeContext,AVFrame * frame);
+    int initSwsContext(struct SwsContext** pSwsContext, SwsScaleContext *swsScaleContext);
+    int initSwsFrame(AVFrame *pSwsFrame, int iWidth, int iHeight);
+ private:
     AvCodexManager();
     AVFormatContext *inputContext = nullptr;
     AVCodecContext *encodeContext = nullptr;

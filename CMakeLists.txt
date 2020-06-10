@@ -29,4 +29,5 @@ add_executable(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/ffmpeg-4.2.3-win64-dev/include)
 target_link_directories(${PROJECT_NAME} PRIVATE C:/Users/frank/Desktop/develop/camera/ffmpeg-4.2.3-win64-dev/lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE avcodec avdevice avfilter avformat avutil postproc Qt5::Widgets Qt5::Network Qt5::Multimedia Qt5::MultimediaWidgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE avcodec avdevice avfilter avformat avutil postproc swresample swscale
+    Qt5::Widgets Qt5::Network Qt5::Multimedia Qt5::MultimediaWidgets)
