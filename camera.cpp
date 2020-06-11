@@ -53,6 +53,7 @@
 #include "videosettings.h"
 #include "imagesettings.h"
 #include "avcodexmanager.h"
+#include "glwidget.h"
 
 #include <QMediaService>
 #include <QMediaRecorder>
@@ -91,6 +92,20 @@ Camera::Camera() : ui(new Ui::Camera)
     connect(ui->captureWidget, &QTabWidget::currentChanged, this, &Camera::updateCaptureMode);
 
     setCamera(QCameraInfo::defaultCamera());
+
+    QLayout *mainLayout = this->layout();
+
+    QColor clearColor;
+    clearColor.setHsv(255, 255, 63);
+
+    GLWidget *glWidgets = new GLWidget;
+    glWidgets->setBaseSize(50, 50);
+    glWidgets->setClearColor(clearColor);
+    mainLayout->addWidget(glWidgets);
+
+    setLayout(mainLayout);
+
+    setWindowTitle(tr("Textures"));
 }
 
 void Camera::setCamera(const QCameraInfo &cameraInfo)

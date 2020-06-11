@@ -36,7 +36,7 @@ int AvCodexManager::OpenInput(const std::string &inputUrl) {
 
 bool AvCodexManager::present(const QVideoFrame &frame)
 {
-    std::cout << __FUNCTION__ << std::endl;
+//    std::cout << __FUNCTION__ << std::endl;
     // 处理捕获的帧
     if(frame.isMapped())
     {
@@ -67,6 +67,13 @@ QList<QVideoFrame::PixelFormat> AvCodexManager::supportedPixelFormats(
 
 void AvCodexManager::setVideoFrame(const QVideoFrame &frame)
 {
+//    std::cout << __FUNCTION__ << frame.pixelFormat() << std::endl;
+    QImage res(frame.bits(),
+               frame.width(),
+               frame.height(),
+               frame.bytesPerLine(),
+               QImage::Format_RGB32);
+
     switch (frame.pixelFormat())
     {
     case QVideoFrame::Format_RGB24:

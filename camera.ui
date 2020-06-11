@@ -145,8 +145,8 @@
            <string>Capture Photo</string>
           </property>
           <property name="icon">
-           <iconset theme="shutter">
-            <normaloff>.</normaloff>.</iconset>
+           <iconset>
+            <normaloff>images/shutter.svg</normaloff>images/shutter.svg</iconset>
           </property>
          </widget>
         </item>

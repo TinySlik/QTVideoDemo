@@ -17,11 +17,13 @@ set(QRC_SOURCE_FILES ${PROJECT_NAME}.qrc)
 qt5_add_resources(QRC_FILES ${QRC_SOURCE_FILES})
 
 add_executable(${PROJECT_NAME}
+  ${QRC_FILES}
   main.cpp
   camera.cpp
   imagesettings.cpp
   videosettings.cpp
   avcodexmanager.cpp
+  glwidget.cpp
   camera.ui
   imagesettings.ui
   videosettings.ui
