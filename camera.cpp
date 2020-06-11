@@ -92,20 +92,6 @@ Camera::Camera() : ui(new Ui::Camera)
     connect(ui->captureWidget, &QTabWidget::currentChanged, this, &Camera::updateCaptureMode);
 
     setCamera(QCameraInfo::defaultCamera());
-
-    QLayout *mainLayout = this->layout();
-
-    QColor clearColor;
-    clearColor.setHsv(255, 255, 63);
-
-    GLWidget *glWidgets = new GLWidget;
-    glWidgets->setBaseSize(50, 50);
-    glWidgets->setClearColor(clearColor);
-    mainLayout->addWidget(glWidgets);
-
-    setLayout(mainLayout);
-
-    setWindowTitle(tr("Textures"));
 }
 
 void Camera::setCamera(const QCameraInfo &cameraInfo)
@@ -200,11 +186,11 @@ void Camera::updateRecordTime()
 void Camera::processCapturedImage(int requestId, const QImage& img)
 {
     Q_UNUSED(requestId);
-    QImage scaledImage = img.scaled(ui->viewfinder->size(),
+    QImage scaledImage = img.scaled(ui->glWidget->size(),
                                     Qt::KeepAspectRatio,
                                     Qt::SmoothTransformation);
 
-    ui->lastImagePreviewLabel->setPixmap(QPixmap::fromImage(scaledImage));
+//    ui->lastImagePreviewLabel->setPixmap(QPixmap::fromImage(scaledImage));
     static int kk = 0;
     // Display captured image for 4 seconds.
     displayCapturedImage();
