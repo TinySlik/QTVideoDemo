@@ -42,6 +42,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
 #include <QMouseEvent>
+#include <iostream>
 
 GLWidget::GLWidget(QWidget *parent)
     : QOpenGLWidget(parent),
@@ -154,9 +155,9 @@ void GLWidget::paintGL()
     program->setAttributeBuffer(PROGRAM_TEXCOORD_ATTRIBUTE, GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
 
     for (int i = 0; i < 6; ++i) {
-        textures[i]->bind();
-        glDrawArrays(GL_TRIANGLE_FAN, i * 4, 4);
+        glDrawArrays(GL_TRIANGLE_FAN, i*4, 4);
     }
+    textures[1]->bind();
 }
 void GLWidget::resizeGL(int width, int height)
 {
@@ -166,6 +167,16 @@ void GLWidget::resizeGL(int width, int height)
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
+}
+
+void GLWidget::updateTextureRes(const QImage &image) {
+    if (textures[1] != nullptr)
+    {
+        std::cout << __FUNCTION__ <<std::endl;
+        delete textures[1];
+        textures[1] = new QOpenGLTexture(image.mirrored());
+    }
+    update();
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
@@ -183,7 +194,7 @@ void GLWidget::mouseReleaseEvent(QMouseEvent */*  event */)
 void GLWidget::makeObject()
 {
     static const int coords[6][4][3] = {
-        { { +1, -1, -1 }, { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 } },
+        { { -1, +1, -1 }, { +1, +1, -1 }, { +1, -1, -1 }, { -1, -1, -1 } },
         { { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 } },
         { { +1, -1, +1 }, { +1, -1, -1 }, { +1, +1, -1 }, { +1, +1, +1 } },
         { { -1, -1, -1 }, { -1, -1, +1 }, { -1, +1, +1 }, { -1, +1, -1 } },

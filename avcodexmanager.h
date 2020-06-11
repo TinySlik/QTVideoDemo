@@ -90,6 +90,8 @@ public Q_SLOTS:
     int OpenOutput(const std::string &outUrl);
     void CloseInput();
     void CloseOutput();
+Q_SIGNALS:
+    void noticeGLTextureUpdate(const QImage &image);
 private:
 //    void setRGB24Image(const uint8_t *imgBuf, QSize size);
 //    void setRGB32Image(const uint8_t *imgBuf, QSize size);
@@ -98,7 +100,6 @@ private:
 //    void setVYUYImage(const uint8_t *imgBuf, QSize size);
 //    void setUYVYImage(const uint8_t *imgBuf, QSize size);
     QImage m_image;
-Q_SIGNALS:
 };
 
 #endif // AVCODEXMANAGER_H

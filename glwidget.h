@@ -72,6 +72,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
     void mouseReleaseEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
 
+
 private:
     void makeObject();
     QPoint p_mouse;
@@ -83,6 +84,8 @@ private:
     QOpenGLTexture *textures[6];
     QOpenGLShaderProgram *program;
     QOpenGLBuffer vbo;
+public slots:
+    void updateTextureRes(const QImage &image);
 };
 
 #endif

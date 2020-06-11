@@ -73,6 +73,7 @@ void AvCodexManager::setVideoFrame(const QVideoFrame &frame)
                frame.height(),
                frame.bytesPerLine(),
                QImage::Format_RGB32);
+    emit noticeGLTextureUpdate(res);
 
     switch (frame.pixelFormat())
     {

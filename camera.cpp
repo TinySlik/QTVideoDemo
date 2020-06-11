@@ -63,6 +63,7 @@
 
 #include <QMessageBox>
 #include <QPalette>
+#include <QImage>
 
 #include <QtWidgets>
 
@@ -90,7 +91,8 @@ Camera::Camera() : ui(new Ui::Camera)
 
     connect(videoDevicesGroup, &QActionGroup::triggered, this, &Camera::updateCameraDevice);
     connect(ui->captureWidget, &QTabWidget::currentChanged, this, &Camera::updateCaptureMode);
-
+    connect(AvCodexManager::getInstance(), &AvCodexManager::noticeGLTextureUpdate,
+            ui->glWidget, &GLWidget::updateTextureRes);
     setCamera(QCameraInfo::defaultCamera());
 }
 
