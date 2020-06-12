@@ -107,6 +107,7 @@ private slots:
 
     void readyForCapture(bool ready);
     void imageSaved(int id, const QString &fileName);
+    void RecordClicked();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -128,8 +129,7 @@ private:
     bool m_applicationExiting = false;
 
 signals:
-    int startRecord(int);
-    int stopRecord();
+    void RecordButtonEvent(int seconds);
     int OpenInput(const std::string &inputUrl);
     int OpenOutput(const std::string &outUrl);
     void CloseInput();

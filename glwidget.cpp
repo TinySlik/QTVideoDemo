@@ -172,9 +172,9 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 void GLWidget::updateTextureRes(const QImage &image) {
     if (textures[1] != nullptr)
     {
-        std::cout << __FUNCTION__ <<std::endl;
-        delete textures[1];
+        auto oldTexture = textures[1];
         textures[1] = new QOpenGLTexture(image.mirrored());
+        delete oldTexture;
     }
     update();
 }

@@ -88,14 +88,20 @@ Camera::Camera() : ui(new Ui::Camera)
 
         ui->menuDevices->addAction(videoDeviceAction);
     }
-
+    AvCodexManager::getInstance()->Init();
     connect(videoDevicesGroup, &QActionGroup::triggered, this, &Camera::updateCameraDevice);
     connect(ui->captureWidget, &QTabWidget::currentChanged, this, &Camera::updateCaptureMode);
-    connect(AvCodexManager::getInstance(), &AvCodexManager::noticeGLTextureUpdate,
-            ui->glWidget, &GLWidget::updateTextureRes);
+    connect(AvCodexManager::getInstance(), &AvCodexManager::noticeGLTextureUpdate, ui->glWidget, &GLWidget::updateTextureRes);
+    connect(ui->recordRtn, SIGNAL(clicked()), this, SLOT(RecordClicked()));
+    connect(this, &Camera::RecordButtonEvent,
+            AvCodexManager::getInstance(), &AvCodexManager::RecordButtonEvent);
     setCamera(QCameraInfo::defaultCamera());
 }
 
+void Camera::RecordClicked()
+{
+    emit RecordButtonEvent(0);
+}
 void Camera::setCamera(const QCameraInfo &cameraInfo)
 {
     m_camera.reset(new QCamera(cameraInfo));
@@ -115,7 +121,6 @@ void Camera::setCamera(const QCameraInfo &cameraInfo)
 
     connect(ui->exposureCompensation, &QAbstractSlider::valueChanged, this, &Camera::setExposureCompensation);
 
-//    m_camera->setViewfinder(ui->viewfinder);
     m_camera->setViewfinder(AvCodexManager::getInstance());
 
     updateCameraState(m_camera->state());
@@ -141,7 +146,6 @@ void Camera::keyPressEvent(QKeyEvent * event)
 {
     if (event->isAutoRepeat())
         return;
-
     switch (event->key()) {
     case Qt::Key_CameraFocus:
         displayViewfinder();
@@ -312,7 +316,6 @@ void Camera::updateLockStatus(QCamera::LockStatus status, QCamera::LockChangeRea
 
 void Camera::takeImage()
 {
-    std::cout << __FUNCTION__ << std::endl;
     m_isCapturingImage = true;
     m_imageCapture->capture();
 }
@@ -410,19 +413,16 @@ void Camera::displayViewfinder()
 
 void Camera::displayCapturedImage()
 {
-    std::cout << __FUNCTION__ << std::endl;
     ui->stackedWidget->setCurrentIndex(1);
 }
 
 void Camera::readyForCapture(bool ready)
 {
-    std::cout << __FUNCTION__ << std::endl;
     ui->takeImageButton->setEnabled(ready);
 }
 
 void Camera::imageSaved(int id, const QString &fileName)
 {
-    std::cout << __FUNCTION__ << std::endl;
     Q_UNUSED(id);
     ui->statusbar->showMessage(tr("Captured \"%1\"").arg(QDir::toNativeSeparators(fileName)));
 
