@@ -85,16 +85,6 @@ class AvCodexManager:public QAbstractVideoSurface
 
     std::shared_ptr<AVPacket> ReadPacketFromSource();
     void Init();
-    int OpenOutput(const std::string &outUrl, AVCodecContext *encodeCodec);
-    int WritePacket(std::shared_ptr<AVPacket> packet);
-    int InitDecodeContext(AVStream *inputStream);
-    int initEncoderCodec(AVStream* inputStream,AVCodecContext **encodeContext);
-    bool Decode(AVStream* inputStream,AVPacket* packet, AVFrame *frame);
-    std::shared_ptr<AVPacket> Encode(AVCodecContext *encodeContext,AVFrame * frame);
-    int initSwsContext(struct SwsContext** pSwsContext, SwsScaleContext *swsScaleContext);
-    int initSwsFrame(AVFrame *pSwsFrame, int iWidth, int iHeight);
-
-    void run();
     QList<QVideoFrame::PixelFormat> supportedPixelFormats(
             QAbstractVideoBuffer::HandleType handleType = QAbstractVideoBuffer::NoHandle) const override;
     void setVideoFrame(const QVideoFrame &frame);
@@ -113,19 +103,9 @@ private:
 public Q_SLOTS:
     bool present(const QVideoFrame &frame) override;
     void RecordButtonEvent(int seconds);
-    int OpenInput(const std::string &inputUrl);
-    int OpenOutput(const std::string &outUrl);
-    void CloseInput();
-    void CloseOutput();
 Q_SIGNALS:
     void noticeGLTextureUpdate(const QImage &image);
 private:
-//    void setRGB24Image(const uint8_t *imgBuf, QSize size);
-//    void setRGB32Image(const uint8_t *imgBuf, QSize size);
-//    void setMono8Image(const uint8_t *imgBuf, QSize size);
-//    void setYUY2Image(const uint8_t *imgBuf, QSize size);
-//    void setVYUYImage(const uint8_t *imgBuf, QSize size);
-//    void setUYVYImage(const uint8_t *imgBuf, QSize size);
     QImage m_image;
     QTime m_RecordBeginTime;
     bool m_InRecord;
